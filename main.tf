@@ -4,19 +4,41 @@
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
+      source = "hashicorp/aws"
       version = "4.52.0"
     }
     random = {
       source  = "hashicorp/random"
       version = "3.4.3"
     }
+    doormat = {
+      source  = "doormat.hashicorp.services/hashicorp-security/doormat"
+      version = "~> 0.0.2"
+    }
   }
   required_version = ">= 1.1.0"
 }
 
+provider "doormat" {}
+
+data "doormat_aws_credentials" "creds" {
+  provider = doormat
+  role_arn = var.role_arn
+}
+
+variable "role_arn" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
 provider "aws" {
-  region = "us-west-2"
+  access_key = data.doormat_aws_credentials.creds.access_key
+  secret_key = data.doormat_aws_credentials.creds.secret_key
+  token      = data.doormat_aws_credentials.creds.token
+  region     = var.region
 }
 
 resource "random_pet" "sg" {}
